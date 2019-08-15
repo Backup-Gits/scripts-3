@@ -65,6 +65,7 @@ kernel()
     check
 
     cd ${DIR}/flasher
+    rm -rf .git
     zip -r $ZIP_NAME ./
     tg file $ZIP_NAME
 
