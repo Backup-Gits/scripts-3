@@ -85,8 +85,13 @@ DEFCONFIG="${3}_defconfig"
 
 case "$COMPILER" in
     gcc)
-        git clone https://github.com/kdrag0n/aarch64-elf-gcc.git --depth=1 gcc
-        git clone https://github.com/kdrag0n/arm-eabi-gcc --depth=1 gcc32
+        git clone https://github.com/kdrag0n/aarch64-elf-gcc --depth=2 gcc
+        git clone https://github.com/kdrag0n/arm-eabi-gcc --depth=2 gcc32
+        cd gcc
+        git checkout 14e746a95f594cf841bdf8c2e6122c274da7f70b
+        cd ../gcc32
+        git checkout 76c68effb613ff240ecad714f6c6f63368e91478
+        cd ..
         CROSS_COMPILE="${DIR}/gcc/bin/aarch64-elf-"
         CROSS_COMPILE_ARM32="${DIR}/gcc32/bin/arm-eabi-"
         export CROSS_COMPILE
