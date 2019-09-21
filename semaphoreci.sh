@@ -81,8 +81,8 @@ DEFCONFIG="${3}_defconfig"
 
 case "$COMPILER" in
     gcc)
-        git clone https://github.com/kdrag0n/aarch64-elf-gcc --depth=2 gcc
-        git clone https://github.com/kdrag0n/arm-eabi-gcc --depth=2 gcc32
+        git clone https://github.com/kdrag0n/aarch64-elf-gcc --depth=3 gcc
+        git clone https://github.com/kdrag0n/arm-eabi-gcc --depth=3 gcc32
         cd gcc
         git checkout 14e746a95f594cf841bdf8c2e6122c274da7f70b
         cd ../gcc32
