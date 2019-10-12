@@ -93,6 +93,11 @@ case "$COMPILER" in
         export CROSS_COMPILE
         export CROSS_COMPILE_ARM32
         ;;
+    gcc4.9)
+        git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 -b android-9.0.0_r39 --depth=1 gcc
+        CROSS_COMPILE="${DIR}/gcc/bin/aarch64-linux-android-"
+        export CROSS_COMPILE
+        ;;
     clang)
         #TODO
         ;;
