@@ -2,13 +2,13 @@
 
 # Script by Lau <laststandrighthere@gmail.com>
 
-# Usage: [cfs|eas|muqss] [gcc|clang] [defconfig]
+# Usage: [zip name] [gcc|clang] [tc_version] [defconfig] [aosp|miui]
 
 # Functions
 
-if [ "$3" == "" ]; then
+if [ "$5" == "" ]; then
     echo -e "Enter all the needed parameters"
-    exit 1
+    exit 0
 fi
 
 tg()
@@ -26,7 +26,7 @@ tg()
             curl -F chat_id=$CHANNEL_ID -F document=@$EXTRA ${URL}sendDocument
             ;;
         sticker)
-            curl -s -X POST ${URL}sendSticker -d sticker="CAADAQADNgADWO60HuUx8T8ZaqhyAg" -d chat_id="$CHANNEL_ID"
+            curl -s -X POST ${URL}sendSticker -d sticker="$EXTRA" -d chat_id="$CHANNEL_ID"
             ;;
     esac
 }
@@ -37,10 +37,24 @@ check()
 
     if ! [ -a $KERN_IMG ]; then
         echo -e "Kernel compilation failed, See buildlog to fix errors"
-        exit 1
+        exit 0
     fi
 
     cp $KERN_IMG ${DIR}/flasher
+
+    if [ "$TYPE" == "miui" ]; then
+        WLAN_MOD="${DIR}/out/drivers/staging/prima/wlan.ko"
+        cp $WLAN_MOD ${DIR}/flasher/modules/system/lib/modules/pronto/pronto_wlan.ko
+    fi
+}
+
+zip_upload()
+{
+    ZIP_NAME="VIMB-${NAME^^}-r${SEMAPHORE_BUILD_NUMBER}.zip"
+    cd ${DIR}/flasher
+    rm -rf .git
+    zip -r $ZIP_NAME ./
+    tg file $ZIP_NAME
 }
 
 kernel()
@@ -51,76 +65,89 @@ kernel()
     mkdir -p out
 
     case "$COMPILER" in
-    gcc)
-        make O=out $DEFCONFIG
-        make O=out -j$JOBS
-        ;;
-    clang)
-        #TODO
-        ;;
+        gcc)
+            make O=out $DEFCONFIG
+            make O=out -j$JOBS
+            ;;
+        clang)
+            #TODO
+            ;;
     esac
 
     check
-
-    cd ${DIR}/flasher
-    rm -rf .git
-    zip -r $ZIP_NAME ./
-    tg file $ZIP_NAME
+    zip_upload
 }
 
-# Set up the enviroment
+setup()
+{
+    sudo install-package --update-new ccache bc bash git-core gnupg build-essential \
+            zip curl make automake autogen autoconf autotools-dev libtool shtool python \
+            m4 gcc libtool zlib1g-dev
 
-sudo install-package --update-new ccache bc bash git-core gnupg build-essential \
-		zip curl make automake autogen autoconf autotools-dev libtool shtool python \
-		m4 gcc libtool zlib1g-dev
+    case "$COMPILER" in
+        gcc)
+            case "$TC_VER" in
+                9)
+                    git clone https://github.com/kdrag0n/aarch64-elf-gcc --depth=3 gcc
+                    git clone https://github.com/kdrag0n/arm-eabi-gcc --depth=3 gcc32
+                    cd gcc
+                    git checkout 14e746a95f594cf841bdf8c2e6122c274da7f70b
+                    cd ../gcc32
+                    git checkout 76c68effb613ff240ecad714f6c6f63368e91478
+                    cd ..
+                    CROSS_COMPILE="${DIR}/gcc/bin/aarch64-elf-"
+                    CROSS_COMPILE_ARM32="${DIR}/gcc32/bin/arm-eabi-"
+                    export CROSS_COMPILE
+                    export CROSS_COMPILE_ARM32
+                    ;;
+                4.9)
+                    git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 -b android-9.0.0_r39 --depth=1 gcc
+                    CROSS_COMPILE="${DIR}/gcc/bin/aarch64-linux-android-"
+                    export CROSS_COMPILE
+                    ;;
+            esac
+            ;;
+        clang)
+            #TODO
+            ;;
+    esac
+
+    case "$TYPE" in
+        aosp)
+            git clone https://github.com/laststandrighthere/flasher.git -b master --depth=1 flasher
+            ;;
+        miui)
+            git clone https://github.com/laststandrighthere/flasher.git -b miui --depth=1 flasher
+            ;;
+    esac
+}
+
+main_msg()
+{
+    HASH=$(git rev-parse --short HEAD)
+    BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    TEXT="[ VIMB 4.9 ] kernel new build!
+    At branch ${BRANCH}
+    Under commit ${HASH}"
+
+    tg msg "$TEXT"
+}
 
 DIR=$PWD
-TYPE=$1
+NAME=$1
 COMPILER=$2
-DEFCONFIG="${3}_defconfig"
-
-case "$COMPILER" in
-    gcc)
-        git clone https://github.com/kdrag0n/aarch64-elf-gcc --depth=3 gcc
-        git clone https://github.com/kdrag0n/arm-eabi-gcc --depth=3 gcc32
-        cd gcc
-        git checkout 14e746a95f594cf841bdf8c2e6122c274da7f70b
-        cd ../gcc32
-        git checkout 76c68effb613ff240ecad714f6c6f63368e91478
-        cd ..
-        CROSS_COMPILE="${DIR}/gcc/bin/aarch64-elf-"
-        CROSS_COMPILE_ARM32="${DIR}/gcc32/bin/arm-eabi-"
-        export CROSS_COMPILE
-        export CROSS_COMPILE_ARM32
-        ;;
-    gcc4.9)
-        git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 -b android-9.0.0_r39 --depth=1 gcc
-        CROSS_COMPILE="${DIR}/gcc/bin/aarch64-linux-android-"
-        export CROSS_COMPILE
-        ;;
-    clang)
-        #TODO
-        ;;
-esac
-
-git clone https://github.com/laststandrighthere/flasher.git --depth=1 flasher
+TC_VER=$3
+DEFCONFIG="${4}_defconfig"
+TYPE=$5
 
 export ARCH=arm64 && SUBARCH=arm64
 export KBUILD_BUILD_USER=vimb
-export KBUILD_BUILD_HOST=drone
-
-# Variables
-
-HASH=$(git rev-parse --short HEAD)
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-TEXT="[ VIMB 4.9 ] kernel new build!
-At branch ${BRANCH}
-Under commit ${HASH}"
-ZIP_NAME="VIMB-${TYPE^^}-r${SEMAPHORE_BUILD_NUMBER}.zip"
+export KBUILD_BUILD_HOST=builder
 
 # Main Process
 
-tg msg "$TEXT"
+setup
+main_msg
 kernel
 tg sticker $STICKER
 
