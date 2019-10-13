@@ -36,7 +36,8 @@ check()
     KERN_IMG="${DIR}/out/arch/arm64/boot/Image.gz-dtb"
 
     if ! [ -a $KERN_IMG ]; then
-        echo -e "Kernel compilation failed, See buildlog to fix errors"
+        echo -e "Kernel compilation failed, See buildlogs to fix errors"
+        tg file buildlogs.txt
         exit 0
     fi
 
@@ -60,14 +61,13 @@ zip_upload()
 kernel()
 {
     JOBS=$(grep -c '^processor' /proc/cpuinfo)
-    export JOBS
     rm -rf out
     mkdir -p out
 
     case "$COMPILER" in
         gcc)
             make O=out $DEFCONFIG
-            make O=out -j$JOBS
+            make O=out -j$JOBS 2>&1 | tee buildlogs.txt
             ;;
         clang)
             #TODO
