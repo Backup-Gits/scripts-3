@@ -8,7 +8,7 @@
 
 if [ "$5" == "" ]; then
     echo -e "Enter all the needed parameters"
-    exit 0
+    exit 1
 fi
 
 tg()
@@ -38,7 +38,7 @@ check()
     if ! [ -a $KERN_IMG ]; then
         echo -e "Kernel compilation failed, See buildlogs to fix errors"
         tg file buildlogs.txt
-        exit 0
+        exit 1
     fi
 
     cp $KERN_IMG ${DIR}/flasher
