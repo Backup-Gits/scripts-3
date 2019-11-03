@@ -51,7 +51,7 @@ check()
 
 zip_upload()
 {
-    ZIP_NAME="VIMB-${NAME^^}-r${SEMAPHORE_BUILD_NUMBER}.zip"
+    ZIP_NAME="VIMB-${BRANCH^^}-r${SEMAPHORE_BUILD_NUMBER}.zip"
     cd ${DIR}/flasher
     rm -rf .git
     zip -r $ZIP_NAME ./
