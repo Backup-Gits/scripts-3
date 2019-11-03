@@ -70,7 +70,13 @@ kernel()
             make O=out -j$JOBS 2>&1 | tee buildlogs.txt
             ;;
         clang)
-            #TODO
+            make O=out ARCH=arm64 ${DEFCONFIG}
+            make -j$JOBS O=out \
+                    ARCH=arm64 \
+                    CC="${DIR}/clang/clang-r353983c/bin/clang" \
+                    CLANG_TRIPLE="aarch64-linux-gnu-" \
+                    CROSS_COMPILE="${DIR}/gcc/bin/aarch64-linux-android-" \
+                    CROSS_COMPILE_ARM32="${DIR}/gcc32/bin/arm-linux-androideabi-"
             ;;
     esac
 
@@ -108,7 +114,16 @@ setup()
             esac
             ;;
         clang)
-            #TODO
+            case "$TC_VER" in
+                aosp)
+                    git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 -b ndk-r19 --depth=1 gcc
+                    git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9 -b ndk-r19 --depth=1 gcc32
+                    git clone https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 --depth=1 clang
+                    cd clang
+                    find . | grep -v 'clang-r353983c' | xargs rm -rf
+                    cd ..
+                    ;;
+            esac
             ;;
     esac
 
