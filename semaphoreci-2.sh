@@ -51,7 +51,7 @@ check()
 
 zip_upload()
 {
-    ZIP_NAME="WHYBLUE-${BRANCH^^}-r${SEMAPHORE_BUILD_NUMBER}.zip"
+    ZIP_NAME="Whyblue-${BRANCH^^}-r${SEMAPHORE_BUILD_NUMBER}.zip"
     cd ${DIR}/flasher
     rm -rf .git
     zip -r $ZIP_NAME ./
@@ -141,7 +141,7 @@ main_msg()
 {
     HASH=$(git rev-parse --short HEAD)
     BRANCH=$(git rev-parse --abbrev-ref HEAD)
-    TEXT="[ WHYBLUE ] kernel new build!
+    TEXT="[ Whyblue ] kernel new build!
     At branch ${BRANCH}
     Under commit ${HASH}"
 
