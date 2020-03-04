@@ -33,7 +33,7 @@ tg()
 
 check()
 {
-    KERN_IMG="${DIR}/out/arch/arm64/boot/Image.gz"
+    KERN_IMG="${DIR}/out/arch/arm64/boot/Image.gz-dtb"
 
     if ! [ -a $KERN_IMG ]; then
         echo -e "Kernel compilation failed, See buildlogs to fix errors"
