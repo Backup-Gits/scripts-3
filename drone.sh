@@ -72,11 +72,10 @@ kernel()
             make O=out -j$JOBS 2>&1 | tee buildlogs.txt
             ;;
         clang)
-            make O=out ARCH=arm64 ${DEFCONFIG}
+            make O=out ${DEFCONFIG}
             case "$TC_VER" in
                 aosp)
                     make -j$JOBS O=out \
-                            ARCH=arm64 \
                             CC="${DIR}/clang/clang-r353983c/bin/clang" \
                             CLANG_TRIPLE="aarch64-linux-gnu-" \
                             CROSS_COMPILE="${DIR}/gcc/bin/aarch64-linux-android-" \
@@ -85,7 +84,6 @@ kernel()
                 proton)
                     export PATH="${DIR}/clang/bin:$PATH"
                     make -j$JOBS O=out \
-                            ARCH=arm64 \
                             CC=clang \
                             CROSS_COMPILE=aarch64-linux-gnu- \
                             CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
