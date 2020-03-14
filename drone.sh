@@ -73,12 +73,29 @@ kernel()
             ;;
         clang)
             make O=out ARCH=arm64 ${DEFCONFIG}
-            make -j$JOBS O=out \
-                    ARCH=arm64 \
-                    CC="${DIR}/clang/clang-r353983c/bin/clang" \
-                    CLANG_TRIPLE="aarch64-linux-gnu-" \
-                    CROSS_COMPILE="${DIR}/gcc/bin/aarch64-linux-android-" \
-                    CROSS_COMPILE_ARM32="${DIR}/gcc32/bin/arm-linux-androideabi-"
+            case "$TC_VER" in
+                aosp)
+                    make -j$JOBS O=out \
+                            ARCH=arm64 \
+                            CC="${DIR}/clang/clang-r353983c/bin/clang" \
+                            CLANG_TRIPLE="aarch64-linux-gnu-" \
+                            CROSS_COMPILE="${DIR}/gcc/bin/aarch64-linux-android-" \
+                            CROSS_COMPILE_ARM32="${DIR}/gcc32/bin/arm-linux-androideabi-"
+                    ;;
+                proton)
+                    export PATH="${DIR}/clang/bin:$PATH"
+                    make -j$JOBS O=out \
+                            ARCH=arm64 \
+                            CC=clang \
+                            CROSS_COMPILE=aarch64-linux-gnu- \
+                            CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
+                            AR=llvm-ar \
+                            NM=llvm-nm \
+                            OBJCOPY=llvm-objcopy \
+                            OBJDUMP=llvm-objdump \
+                            STRIP=llvm-strip
+                    ;;
+            esac
             ;;
     esac
 
@@ -129,6 +146,9 @@ setup()
                     cd clang
                     find . | grep -v 'clang-r353983c' | xargs rm -rf
                     cd ..
+                    ;;
+                proton)
+                    git clone https://github.com/kdrag0n/proton-clang.git --depth=1 clang
                     ;;
             esac
             ;;
