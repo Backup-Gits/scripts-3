@@ -110,10 +110,6 @@ kernel()
 
 setup()
 {
-    sudo install-package --update-new ccache bc bash git-core gnupg build-essential \
-            zip curl make automake autogen autoconf autotools-dev libtool shtool python \
-            m4 gcc libtool zlib1g-dev
-
     case "$COMPILER" in
         gcc)
             case "$TC_VER" in
