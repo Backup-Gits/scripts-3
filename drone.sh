@@ -64,6 +64,8 @@ kernel()
     rm -rf out
     mkdir -p out
 
+    START=$(date +"%s")
+
     case "$COMPILER" in
         gcc)
             make O=out $DEFCONFIG
@@ -80,8 +82,13 @@ kernel()
             ;;
     esac
 
+    END=$(date +"%s")
+    DIFF=$((END - START))
+    TIME="Job took $((DIFF / 60))m and $((DIFF % 60))s"
+
     check
     zip_upload
+    tg msg "$TIME"
 }
 
 setup()
