@@ -68,11 +68,11 @@ kernel()
 
     case "$COMPILER" in
         gcc)
-            make O=out $DEFCONFIG
-            make O=out -j$JOBS 2>&1 | tee buildlogs.txt
+            make O=out ARCH=arm64 $DEFCONFIG
+            make O=out ARCH=arm64 -j$JOBS 2>&1 | tee buildlogs.txt
             ;;
         clang)
-            make O=out ${DEFCONFIG}
+            make O=out ARCH=arm64 ${DEFCONFIG}
             case "$TC_VER" in
                 aosp)
                     make -j$JOBS O=out \
@@ -82,16 +82,14 @@ kernel()
                             CROSS_COMPILE_ARM32="${DIR}/gcc32/bin/arm-linux-androideabi-"
                     ;;
                 proton)
-                    export PATH="${DIR}/clang/bin:$PATH"
+                    export PATH="/drone/src/clang/bin:$PATH"
+                    clang --version
+                    which clang
                     make -j$JOBS O=out \
                             CC=clang \
                             CROSS_COMPILE=aarch64-linux-gnu- \
                             CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
-                            AR=llvm-ar \
-                            NM=llvm-nm \
-                            OBJCOPY=llvm-objcopy \
-                            OBJDUMP=llvm-objdump \
-                            STRIP=llvm-strip
+                            ARCH=arm64
                     ;;
             esac
             ;;
@@ -175,7 +173,10 @@ TC_VER=$2
 DEFCONFIG="${3}_defconfig"
 TYPE=$4
 
-export ARCH=arm64 && SUBARCH=arm64
+echo $PWD
+echo $COMPILER
+echo $TC_VER
+
 export KBUILD_BUILD_USER=vimb
 export KBUILD_BUILD_HOST=builder
 
