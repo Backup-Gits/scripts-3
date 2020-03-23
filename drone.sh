@@ -35,23 +35,25 @@ check()
 {
     KERN_IMG="${DIR}/out/arch/arm64/boot/Image.gz-dtb"
 
-    if ! [ -a $KERN_IMG ]; then
+    if [ -f $KERN_IMG ]; then
+        cp $KERN_IMG ${DIR}/flasher
+
+        if [ "$TYPE" == "miui" ]; then
+            WLAN_MOD="${DIR}/out/drivers/staging/prima/wlan.ko"
+            cp $WLAN_MOD ${DIR}/flasher/modules/system/lib/modules/pronto/pronto_wlan.ko
+        fi
+
+        zip_upload
+        
+    else
         echo -e "Kernel compilation failed, See buildlogs to fix errors"
-        tg file buildlogs.txt
-        exit 1
-    fi
-
-    cp $KERN_IMG ${DIR}/flasher
-
-    if [ "$TYPE" == "miui" ]; then
-        WLAN_MOD="${DIR}/out/drivers/staging/prima/wlan.ko"
-        cp $WLAN_MOD ${DIR}/flasher/modules/system/lib/modules/pronto/pronto_wlan.ko
+        tg file buildlogs.log
     fi
 }
 
 zip_upload()
 {
-    ZIP_NAME="VIMB-${BRANCH^^}2-r${DRONE_BUILD_NUMBER}.zip"
+    ZIP_NAME="VIMB-${BRANCH^^}-r${DRONE_BUILD_NUMBER}.zip"
     cd ${DIR}/flasher
     rm -rf .git
     zip -r $ZIP_NAME ./
@@ -82,7 +84,7 @@ kernel()
                             CROSS_COMPILE_ARM32="${DIR}/gcc32/bin/arm-linux-androideabi-"
                     ;;
                 proton)
-                    export PATH="/drone/src/clang/bin:$PATH"
+                    export PATH="$DIR/clang/bin:$PATH"
                     clang --version
                     which clang
                     make -j$JOBS O=out \
@@ -100,7 +102,6 @@ kernel()
     TIME="Job took $((DIFF / 60))m and $((DIFF % 60))s"
 
     check
-    zip_upload
     tg msg "$TIME"
 }
 
