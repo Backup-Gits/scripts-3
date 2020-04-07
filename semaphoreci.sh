@@ -63,6 +63,7 @@ kernel()
     JOBS=$(grep -c '^processor' /proc/cpuinfo)
     rm -rf out
     mkdir -p out
+    rm -rf .git
 
     case "$COMPILER" in
         gcc)
