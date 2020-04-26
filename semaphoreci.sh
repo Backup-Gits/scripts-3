@@ -37,7 +37,6 @@ check()
 
     if ! [ -a $KERN_IMG ]; then
         echo -e "Kernel compilation failed, See buildlogs to fix errors"
-        tg file buildlogs.txt
         exit 1
     fi
 
@@ -68,7 +67,7 @@ kernel()
     case "$COMPILER" in
         gcc)
             make O=out $DEFCONFIG
-            make O=out -j$JOBS 2>&1 | tee buildlogs.txt
+            make O=out -j$JOBS
             ;;
         clang)
             make O=out ARCH=arm64 ${DEFCONFIG}
@@ -126,9 +125,6 @@ setup()
                     git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 -b ndk-r19 --depth=1 gcc
                     git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9 -b ndk-r19 --depth=1 gcc32
                     git clone https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 --depth=1 clang
-                    cd clang
-                    find . | grep -v 'clang-r353983c' | xargs rm -rf
-                    cd ..
                     ;;
             esac
             ;;
