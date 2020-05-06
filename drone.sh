@@ -44,7 +44,7 @@ check()
         fi
 
         zip_upload
-        
+
     else
         echo -e "Kernel compilation failed, See buildlogs to fix errors"
         tg file buildlogs.log
@@ -84,7 +84,7 @@ kernel()
                             CROSS_COMPILE_ARM32="${DIR}/gcc32/bin/arm-linux-androideabi-"
                     ;;
                 proton)
-                    export PATH="$DIR/clang/bin:$PATH"
+                    export PATH="$PWD/clang/bin:$PATH"
                     clang --version
                     which clang
                     make -j$JOBS O=out \
