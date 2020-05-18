@@ -93,7 +93,7 @@ setup()
     case "$COMPILER" in
         gcc)
             case "$TC_VER" in
-                9)
+                9.1)
                     git clone https://github.com/kdrag0n/aarch64-elf-gcc --depth=3 gcc
                     git clone https://github.com/kdrag0n/arm-eabi-gcc --depth=3 gcc32
                     cd gcc
@@ -101,6 +101,14 @@ setup()
                     cd ../gcc32
                     git checkout 76c68effb613ff240ecad714f6c6f63368e91478
                     cd ..
+                    CROSS_COMPILE="${DIR}/gcc/bin/aarch64-elf-"
+                    CROSS_COMPILE_ARM32="${DIR}/gcc32/bin/arm-eabi-"
+                    export CROSS_COMPILE
+                    export CROSS_COMPILE_ARM32
+                    ;;
+                9.3)
+                    git clone https://github.com/arter97/arm64-gcc --depth=1 gcc
+                    git clone https://github.com/arter97/arm32-gcc --depth=1 gcc32
                     CROSS_COMPILE="${DIR}/gcc/bin/aarch64-elf-"
                     CROSS_COMPILE_ARM32="${DIR}/gcc32/bin/arm-eabi-"
                     export CROSS_COMPILE
