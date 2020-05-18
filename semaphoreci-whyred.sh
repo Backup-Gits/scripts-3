@@ -108,8 +108,11 @@ setup()
                     ;;
                 4.9)
                     git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 -b android-9.0.0_r39 --depth=1 gcc
+                    git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9 -b android-9.0.0_r39 --depth=1 gcc32
                     CROSS_COMPILE="${DIR}/gcc/bin/aarch64-linux-android-"
+                    CROSS_COMPILE_ARM32="${DIR}/gcc32/bin/arm-linux-androideabi-"
                     export CROSS_COMPILE
+                    export CROSS_COMPILE_ARM32
                     ;;
             esac
             ;;
