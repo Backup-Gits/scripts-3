@@ -64,19 +64,34 @@ kernel()
     mkdir -p out
     rm -rf .git
 
+	echo $PWD
+	echo $DIR
+
     case "$COMPILER" in
         gcc)
             make O=out $DEFCONFIG
             make O=out -j$JOBS
             ;;
         clang)
-            make O=out ARCH=arm64 ${DEFCONFIG}
-            make -j$JOBS O=out \
-                    ARCH=arm64 \
-                    CC="${DIR}/clang/clang-r353983c/bin/clang" \
-                    CLANG_TRIPLE="aarch64-linux-gnu-" \
-                    CROSS_COMPILE="${DIR}/gcc/bin/aarch64-linux-android-" \
-                    CROSS_COMPILE_ARM32="${DIR}/gcc32/bin/arm-linux-androideabi-"
+			make O=out ARCH=arm64 $DEFCONFIG
+            case "$TC_VER" in
+                aosp)
+					PATH="$DIR/clang/clang-r353983c/bin:${DIR}/gcc/bin:${DIR}/gcc32/bin:$PATH" \
+                    make -j$JOBS O=out \
+                            CC=clang \
+                            CLANG_TRIPLE=aarch64-linux-gnu- \
+                            CROSS_COMPILE=aarch64-linux-android- \
+                            CROSS_COMPILE_ARM32=arm-linux-androideabi-
+                    ;;
+                proton)
+					PATH="$DIR/clang/bin:$PATH" \
+                    make -j$JOBS O=out \
+                            CC=clang \
+                            CROSS_COMPILE=aarch64-linux-gnu- \
+                            CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
+                            ARCH=arm64
+                    ;;
+            esac
             ;;
     esac
 
@@ -96,24 +111,24 @@ setup()
                 9.1)
                     git clone https://github.com/laststandrighthere/aarch64-elf-gcc --depth=1 -b 9.1 gcc
                     git clone https://github.com/laststandrighthere/arm-eabi-gcc --depth=1 -b 9.1 gcc32
-                    CROSS_COMPILE="${DIR}/gcc/bin/aarch64-elf-"
-                    CROSS_COMPILE_ARM32="${DIR}/gcc32/bin/arm-eabi-"
+                    CROSS_COMPILE="$DIR/gcc/bin/aarch64-elf-"
+                    CROSS_COMPILE_ARM32="$DIR/gcc32/bin/arm-eabi-"
                     export CROSS_COMPILE
                     export CROSS_COMPILE_ARM32
                     ;;
                 9.3)
                     git clone https://github.com/arter97/arm64-gcc --depth=1 gcc
                     git clone https://github.com/arter97/arm32-gcc --depth=1 gcc32
-                    CROSS_COMPILE="${DIR}/gcc/bin/aarch64-elf-"
-                    CROSS_COMPILE_ARM32="${DIR}/gcc32/bin/arm-eabi-"
+                    CROSS_COMPILE="$DIR/gcc/bin/aarch64-elf-"
+                    CROSS_COMPILE_ARM32="$DIR/gcc32/bin/arm-eabi-"
                     export CROSS_COMPILE
                     export CROSS_COMPILE_ARM32
                     ;;
                 4.9)
                     git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 -b android-9.0.0_r39 --depth=1 gcc
                     git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9 -b android-9.0.0_r39 --depth=1 gcc32
-                    CROSS_COMPILE="${DIR}/gcc/bin/aarch64-linux-android-"
-                    CROSS_COMPILE_ARM32="${DIR}/gcc32/bin/arm-linux-androideabi-"
+                    CROSS_COMPILE="$DIR/gcc/bin/aarch64-linux-android-"
+                    CROSS_COMPILE_ARM32="$DIR/gcc32/bin/arm-linux-androideabi-"
                     export CROSS_COMPILE
                     export CROSS_COMPILE_ARM32
                     ;;
@@ -125,6 +140,9 @@ setup()
                     git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 -b ndk-r19 --depth=1 gcc
                     git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9 -b ndk-r19 --depth=1 gcc32
                     git clone https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 --depth=1 clang
+                    ;;
+				proton)
+					git clone https://github.com/kdrag0n/proton-clang.git --depth=1 clang
                     ;;
             esac
             ;;
@@ -162,11 +180,11 @@ export ARCH=arm64 && SUBARCH=arm64
 export KBUILD_BUILD_USER=vimb
 export KBUILD_BUILD_HOST=builder
 
-# Main Process
+# Main Process -------
 
 setup
 main_msg
 kernel
 tg sticker $STICKER
 
-# End
+# End ----------------
