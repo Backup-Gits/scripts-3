@@ -37,6 +37,7 @@ check()
 
     if ! [ -a $KERN_IMG ]; then
         echo -e "Kernel compilation failed, See buildlogs to fix errors"
+		tg file error.log
         exit 1
     fi
 
@@ -60,36 +61,29 @@ zip_upload()
 kernel()
 {
     JOBS=$(grep -c '^processor' /proc/cpuinfo)
-    rm -rf out
+    rm -rf out .git
     mkdir -p out
-    rm -rf .git
-
-	echo $PWD
-	echo $DIR
 
     case "$COMPILER" in
         gcc)
             make O=out $DEFCONFIG
-            make O=out -j$JOBS
+            make O=out -j$JOBS 2>&1 | tee error.log
             ;;
         clang)
 			make O=out ARCH=arm64 $DEFCONFIG
             case "$TC_VER" in
                 aosp)
-					PATH="$DIR/clang/clang-r353983c/bin:${DIR}/gcc/bin:${DIR}/gcc32/bin:$PATH" \
                     make -j$JOBS O=out \
                             CC=clang \
                             CLANG_TRIPLE=aarch64-linux-gnu- \
                             CROSS_COMPILE=aarch64-linux-android- \
-                            CROSS_COMPILE_ARM32=arm-linux-androideabi-
+                            CROSS_COMPILE_ARM32=arm-linux-androideabi- 2>&1 | tee error.log
                     ;;
                 proton)
-					PATH="$DIR/clang/bin:$PATH" \
                     make -j$JOBS O=out \
                             CC=clang \
                             CROSS_COMPILE=aarch64-linux-gnu- \
-                            CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
-                            ARCH=arm64
+                            CROSS_COMPILE_ARM32=arm-linux-gnueabi- 2>&1 | tee error.log
                     ;;
             esac
             ;;
@@ -111,26 +105,20 @@ setup()
                 9.1)
                     git clone https://github.com/laststandrighthere/aarch64-elf-gcc --depth=1 -b 9.1 gcc
                     git clone https://github.com/laststandrighthere/arm-eabi-gcc --depth=1 -b 9.1 gcc32
-                    CROSS_COMPILE="$DIR/gcc/bin/aarch64-elf-"
-                    CROSS_COMPILE_ARM32="$DIR/gcc32/bin/arm-eabi-"
-                    export CROSS_COMPILE
-                    export CROSS_COMPILE_ARM32
+                    export CROSS_COMPILE="$DIR/gcc/bin/aarch64-elf-"
+                    export CROSS_COMPILE_ARM32="$DIR/gcc32/bin/arm-eabi-"
                     ;;
                 9.3)
                     git clone https://github.com/arter97/arm64-gcc --depth=1 gcc
                     git clone https://github.com/arter97/arm32-gcc --depth=1 gcc32
-                    CROSS_COMPILE="$DIR/gcc/bin/aarch64-elf-"
-                    CROSS_COMPILE_ARM32="$DIR/gcc32/bin/arm-eabi-"
-                    export CROSS_COMPILE
-                    export CROSS_COMPILE_ARM32
+                    export CROSS_COMPILE="$DIR/gcc/bin/aarch64-elf-"
+                    export CROSS_COMPILE_ARM32="$DIR/gcc32/bin/arm-eabi-"
                     ;;
                 4.9)
                     git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 -b android-9.0.0_r39 --depth=1 gcc
                     git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9 -b android-9.0.0_r39 --depth=1 gcc32
-                    CROSS_COMPILE="$DIR/gcc/bin/aarch64-linux-android-"
-                    CROSS_COMPILE_ARM32="$DIR/gcc32/bin/arm-linux-androideabi-"
-                    export CROSS_COMPILE
-                    export CROSS_COMPILE_ARM32
+                    export CROSS_COMPILE="$DIR/gcc/bin/aarch64-linux-android-"
+                    export CROSS_COMPILE_ARM32="$DIR/gcc32/bin/arm-linux-androideabi-"
                     ;;
             esac
             ;;
@@ -140,9 +128,13 @@ setup()
                     git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 -b ndk-r19 --depth=1 gcc
                     git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9 -b ndk-r19 --depth=1 gcc32
                     git clone https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 --depth=1 clang
+					export PATH="$DIR/clang/clang-r353983c/bin:$DIR/gcc/bin:$DIR/gcc32/bin:$PATH"
+					export KBUILD_COMPILER_STRING="$($DIR/clang/clang-r353983c/bin/clang --version | head -n 1 | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')";
                     ;;
 				proton)
 					git clone https://github.com/kdrag0n/proton-clang.git --depth=1 clang
+					export PATH="$DIR/clang/bin:$PATH"
+					export KBUILD_COMPILER_STRING="$($DIR/clang/bin/clang --version | head -n 1 | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')";
                     ;;
             esac
             ;;
@@ -150,10 +142,10 @@ setup()
 
     case "$TYPE" in
         aosp)
-            git clone https://github.com/laststandrighthere/flasher.git -b master --depth=1 flasher
+            git clone https://github.com/laststandrighthere/flasher -b master --depth=1 flasher
             ;;
         miui)
-            git clone https://github.com/laststandrighthere/flasher.git -b miui --depth=1 flasher
+            git clone https://github.com/laststandrighthere/flasher -b miui --depth=1 flasher
             ;;
     esac
 }
