@@ -2,11 +2,11 @@
 
 # Script by Lau <laststandrighthere@gmail.com>
 
-# Usage: [zip name] [gcc|clang] [tc_version] [defconfig] [aosp|miui]
+# Usage: [zip name] [gcc|clang] [tc_version] [defconfig] [aosp|miui] [CI]
 
 # Functions
 
-if [ "$5" == "" ]; then
+if [ "$6" == "" ]; then
     echo -e "Enter all the needed parameters"
     exit 1
 fi
@@ -51,7 +51,12 @@ check()
 
 zip_upload()
 {
-    ZIP_NAME="VIMB-${BRANCH^^}-r${SEMAPHORE_BUILD_NUMBER}.zip"
+	if [ $CI == "drone" ]; then
+		ZIP_NAME="VIMB-${BRANCH^^}-r${DRONE_BUILD_NUMBER}.zip"
+	elif [ $CI == "semaphore" ]; then
+		ZIP_NAME="VIMB-${BRANCH^^}-r${SEMAPHORE_BUILD_NUMBER}.zip"
+	fi
+
     cd ${DIR}/flasher
     rm -rf .git
     zip -r $ZIP_NAME ./
@@ -95,9 +100,11 @@ kernel()
 
 setup()
 {
-    sudo install-package --update-new ccache bc bash git-core gnupg build-essential \
-            zip curl make automake autogen autoconf autotools-dev libtool shtool python \
-            m4 gcc libtool zlib1g-dev
+	if [ $CI == "semaphore" ]; then
+		sudo install-package --update-new ccache bc bash git-core gnupg build-essential \
+				zip curl make automake autogen autoconf autotools-dev libtool shtool python \
+				m4 gcc libtool zlib1g-dev
+	fi
 
     case "$COMPILER" in
         gcc)
@@ -167,6 +174,7 @@ COMPILER=$2
 TC_VER=$3
 DEFCONFIG="${4}_defconfig"
 TYPE=$5
+CI=$6
 
 export ARCH=arm64 && SUBARCH=arm64
 export KBUILD_BUILD_USER=vimb
