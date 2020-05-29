@@ -2,11 +2,11 @@
 
 # Script by Lau <laststandrighthere@gmail.com>
 
-# Usage: [zip name] [gcc|clang] [tc_version] [defconfig] [aosp|miui] [CI]
+# Usage: [zip name] [gcc|clang] [tc_version] [defconfig] [aosp|miui] [CI] [ID]
 
 # Functions
 
-if [ "$6" == "" ]; then
+if [ "$7" == "" ]; then
     echo -e "Enter all the needed parameters"
     exit 1
 fi
@@ -36,7 +36,7 @@ check()
     KERN_IMG="${DIR}/out/arch/arm64/boot/Image.gz-dtb"
 
     if ! [ -a $KERN_IMG ]; then
-        echo -e "Kernel compilation failed, See buildlogs to fix errors"
+        tg msg "Kernel compilation failed, check logs"
 		tg file error.log
         exit 1
     fi
@@ -52,9 +52,9 @@ check()
 zip_upload()
 {
 	if [ $CI == "drone" ]; then
-		ZIP_NAME="VIMB-${BRANCH^^}-r${DRONE_BUILD_NUMBER}.zip"
+		ZIP_NAME="${NAME}-${BRANCH^^}-r${DRONE_BUILD_NUMBER}.zip"
 	elif [ $CI == "semaphore" ]; then
-		ZIP_NAME="VIMB-${BRANCH^^}-r${SEMAPHORE_BUILD_NUMBER}.zip"
+		ZIP_NAME="${NAME}-${BRANCH^^}-r${SEMAPHORE_BUILD_NUMBER}.zip"
 	fi
 
     cd ${DIR}/flasher
@@ -75,7 +75,7 @@ kernel()
             make O=out -j$JOBS 2>&1 | tee error.log
             ;;
         clang)
-			make O=out ARCH=arm64 $DEFCONFIG
+			make O=out $DEFCONFIG
             case "$TC_VER" in
                 aosp)
                     make -j$JOBS O=out \
@@ -100,11 +100,11 @@ kernel()
 
 setup()
 {
-	if [ $CI == "semaphore" ]; then
-		sudo install-package --update-new ccache bc bash git-core gnupg build-essential \
-				zip curl make automake autogen autoconf autotools-dev libtool shtool python \
-				m4 gcc libtool zlib1g-dev
-	fi
+    if [ "$CI" == "semaphore" ]; then
+        sudo install-package --update-new ccache bc bash git-core gnupg build-essential \
+                zip curl make automake autogen autoconf autotools-dev libtool shtool python \
+                m4 gcc libtool zlib1g-dev
+    fi
 
     case "$COMPILER" in
         gcc)
@@ -135,13 +135,13 @@ setup()
                     git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 -b ndk-r19 --depth=1 gcc
                     git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9 -b ndk-r19 --depth=1 gcc32
                     git clone https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 --depth=1 clang
-					export PATH="$DIR/clang/clang-r377782d/bin:$DIR/gcc/bin:$DIR/gcc32/bin:$PATH"
-					export KBUILD_COMPILER_STRING="$($DIR/clang/clang-r377782d/bin/clang --version | head -n 1 | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')";
+                    export PATH="$DIR/clang/clang-r377782d/bin:$DIR/gcc/bin:$DIR/gcc32/bin:$PATH"
+                    export KBUILD_COMPILER_STRING="$($DIR/clang/clang-r377782d/bin/clang --version | head -n 1 | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')";
                     ;;
-				proton)
-					git clone https://github.com/kdrag0n/proton-clang.git --depth=1 clang
-					export PATH="$DIR/clang/bin:$PATH"
-					export KBUILD_COMPILER_STRING="$($DIR/clang/bin/clang --version | head -n 1 | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')";
+                proton)
+                    git clone https://github.com/kdrag0n/proton-clang.git --depth=1 clang
+                    export PATH="$DIR/clang/bin:$PATH"
+                    export KBUILD_COMPILER_STRING="$($DIR/clang/bin/clang --version | head -n 1 | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')";
                     ;;
             esac
             ;;
@@ -149,7 +149,11 @@ setup()
 
     case "$TYPE" in
         aosp)
-            git clone https://github.com/laststandrighthere/flasher -b master --depth=1 flasher
+            if [ "$FLASHER" == "vince" ]; then
+            	git clone https://github.com/laststandrighthere/flasher -b ak3 --depth=1 flasher
+            elif [ "$FLASHER" == "whyred" ]; then
+                git clone https://github.com/laststandrighthere/flasher -b whyred --depth=1 flasher
+            fi
             ;;
         miui)
             git clone https://github.com/laststandrighthere/flasher -b miui --depth=1 flasher
@@ -161,7 +165,7 @@ main_msg()
 {
     HASH=$(git rev-parse --short HEAD)
     BRANCH=$(git rev-parse --abbrev-ref HEAD)
-    TEXT="[ VIMB 4.9 ] kernel new build!
+    TEXT="[ $NAME ] kernel new build!
     At branch ${BRANCH}
     Under commit ${HASH}"
 
@@ -175,9 +179,10 @@ TC_VER=$3
 DEFCONFIG="${4}_defconfig"
 TYPE=$5
 CI=$6
+FLASHER=$7
 
 export ARCH=arm64 && SUBARCH=arm64
-export KBUILD_BUILD_USER=vimb
+export KBUILD_BUILD_USER=sleepy
 export KBUILD_BUILD_HOST=builder
 
 # Main Process -------
