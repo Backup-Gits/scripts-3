@@ -111,6 +111,12 @@ setup()
     case "$COMPILER" in
         gcc)
             case "$TC_VER" in
+                arm)
+                    git clone https://github.com/RaphielGang/aarch64-none-elf-9.x --depth=1 gcc
+                    git clone https://github.com/RaphielGang/arm-none-eabi-9.x --depth=1 gcc32
+                    export CROSS_COMPILE="$DIR/gcc/bin/aarch64-none-elf-"
+                    export CROSS_COMPILE_ARM32="$DIR/gcc32/bin/arm-none-eabi-"
+                    ;;
                 9.1)
                     git clone https://github.com/laststandrighthere/aarch64-elf-gcc --depth=1 -b 9.1 gcc
                     git clone https://github.com/laststandrighthere/arm-eabi-gcc --depth=1 -b 9.1 gcc32
