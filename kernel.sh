@@ -70,6 +70,8 @@ kernel()
     rm -rf out .git
     mkdir -p out
 
+    START=$(date +"%s")
+
     case "$COMPILER" in
         gcc)
             make O=out $DEFCONFIG
@@ -95,6 +97,11 @@ kernel()
             ;;
     esac
 
+    END=$(date +"%s")	
+    DIFF=$((END - START))	
+    TIME="Job took $((DIFF / 60))m and $((DIFF % 60))s"
+    
+    tg msg "$TIME"
     check
     zip_upload
     tg sticker $STICKER
