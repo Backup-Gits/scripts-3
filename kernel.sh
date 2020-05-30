@@ -37,7 +37,8 @@ check()
 
     if ! [ -a $KERN_IMG ]; then
         tg msg "Kernel compilation failed, check logs"
-		tg file error.log
+        tg file error.log
+        tg sticker $STICKER
         exit 1
     fi
 
@@ -96,6 +97,7 @@ kernel()
 
     check
     zip_upload
+    tg sticker $STICKER
 }
 
 setup()
@@ -190,6 +192,5 @@ export KBUILD_BUILD_HOST=builder
 setup
 main_msg
 kernel
-tg sticker $STICKER
 
 # End ----------------
