@@ -2,7 +2,7 @@
 
 # Script by Lau <laststandrighthere@gmail.com>
 
-# Usage: [zip name] [gcc|clang] [tc_version] [defconfig] [aosp|miui] [CI] [ID]
+# Usage: [zip name] [gcc|clang] [tc_ver] [*_defconfig] [aosp|miui] [CI] [device ID]
 
 # Functions
 
@@ -36,7 +36,7 @@ check()
     KERN_IMG="${DIR}/out/arch/arm64/boot/Image.gz-dtb"
 
     if ! [ -a $KERN_IMG ]; then
-        tg msg "Kernel compilation failed, check logs"
+        tg msg "Compilation failed, check logs"
         tg file error.log
         tg sticker $STICKER
         exit 1
@@ -97,13 +97,13 @@ kernel()
             ;;
     esac
 
-    END=$(date +"%s")	
-    DIFF=$((END - START))	
-    TIME="Job took $((DIFF / 60))m and $((DIFF % 60))s"
-    
-    tg msg "$TIME"
+    END=$(date +"%s")
+    DIFF=$((END - START))
+    TIME="Build took $((DIFF / 60))m and $((DIFF % 60))s"
+
     check
     zip_upload
+    tg msg "$TIME"
     tg sticker $STICKER
 }
 
