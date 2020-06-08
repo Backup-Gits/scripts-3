@@ -7,7 +7,7 @@
 # Functions
 
 if [ "$7" == "" ]; then
-    echo -e "Enter all the needed parameters"
+    echo "Enter all the needed parameters"
     exit 1
 fi
 
@@ -15,38 +15,47 @@ tg()
 {
     ACTION=$1
     EXTRA=$2
-    URL="https://api.telegram.org/bot${BOT_TOKEN}/"
+    URL="https://api.telegram.org/bot$BOT_TOKEN/"
 
     case "$ACTION" in
         msg)
-            curl -X POST ${URL}sendMessage -d chat_id=$CHANNEL_ID -d text="$EXTRA"
+            curl \
+            -d parse_mode=HTML \
+            -X POST ${URL}sendMessage \
+            -d chat_id=$CHANNEL_ID \
+            -d text="$EXTRA"
             ;;
         file)
-            cd ${DIR}/flasher
-            curl -F chat_id=$CHANNEL_ID -F document=@$EXTRA ${URL}sendDocument
+            curl \
+            -F chat_id=$CHANNEL_ID \
+            -F document=@$EXTRA ${URL}sendDocument \
             ;;
         sticker)
-            curl -s -X POST ${URL}sendSticker -d sticker="$EXTRA" -d chat_id="$CHANNEL_ID"
+            curl \
+            -X POST ${URL}sendSticker \
+            -d sticker="$EXTRA" \
+            -d chat_id="$CHANNEL_ID"
             ;;
     esac
 }
 
 check()
 {
-    KERN_IMG="${DIR}/out/arch/arm64/boot/Image.gz-dtb"
+    KERN_IMG="$DIR/out/arch/arm64/boot/Image.gz-dtb"
+    PRIMA="$DIR/flasher/modules/system/lib/modules/pronto/pronto_wlan.ko"
 
     if ! [ -a $KERN_IMG ]; then
         tg msg "Compilation failed, check logs"
-        tg file error.log
+        tg file $DIR/logs.log
         tg sticker $STICKER
         exit 1
     fi
 
-    cp $KERN_IMG ${DIR}/flasher
+    cp $KERN_IMG $DIR/flasher
 
     if [ "$TYPE" == "miui" ]; then
-        WLAN_MOD="${DIR}/out/drivers/staging/prima/wlan.ko"
-        cp $WLAN_MOD ${DIR}/flasher/modules/system/lib/modules/pronto/pronto_wlan.ko
+        WLAN_MOD="$DIR/out/drivers/staging/prima/wlan.ko"
+        cp $WLAN_MOD $PRIMA
     fi
 }
 
@@ -58,7 +67,7 @@ zip_upload()
 		ZIP_NAME="${NAME}-${BRANCH^^}-r${SEMAPHORE_BUILD_NUMBER}.zip"
 	fi
 
-    cd ${DIR}/flasher
+    cd $DIR/flasher
     rm -rf .git
     zip -r $ZIP_NAME ./
     tg file $ZIP_NAME
@@ -75,23 +84,23 @@ kernel()
     case "$COMPILER" in
         gcc)
             make O=out $DEFCONFIG
-            make O=out -j$JOBS 2>&1 | tee error.log
+            make O=out -j$JOBS 2>&1 | tee logs.log
             ;;
         clang)
 			make O=out $DEFCONFIG
             case "$TC_VER" in
                 aosp)
                     make -j$JOBS O=out \
-                            CC=clang \
-                            CLANG_TRIPLE=aarch64-linux-gnu- \
-                            CROSS_COMPILE=aarch64-linux-android- \
-                            CROSS_COMPILE_ARM32=arm-linux-androideabi- 2>&1 | tee error.log
+                        CC=clang \
+                        CLANG_TRIPLE=aarch64-linux-gnu- \
+                        CROSS_COMPILE=aarch64-linux-android- \
+                        CROSS_COMPILE_ARM32=arm-linux-androideabi- 2>&1 | tee logs.log
                     ;;
                 proton)
                     make -j$JOBS O=out \
-                            CC=clang \
-                            CROSS_COMPILE=aarch64-linux-gnu- \
-                            CROSS_COMPILE_ARM32=arm-linux-gnueabi- 2>&1 | tee error.log
+                        CC=clang \
+                        CROSS_COMPILE=aarch64-linux-gnu- \
+                        CROSS_COMPILE_ARM32=arm-linux-gnueabi- 2>&1 | tee logs.log
                     ;;
             esac
             ;;
@@ -110,9 +119,10 @@ kernel()
 setup()
 {
     if [ "$CI" == "semaphore" ]; then
-        sudo install-package --update-new ccache bc bash git-core gnupg build-essential \
-                zip curl make automake autogen autoconf autotools-dev libtool shtool python \
-                m4 gcc libtool zlib1g-dev
+        sudo install-package --update-new \
+            ccache bc bash git-core gnupg build-essential zip curl make \
+            automake autogen autoconf autotools-dev libtool shtool python m4 \
+            gcc libtool zlib1g-dev
     fi
 
     case "$COMPILER" in
@@ -131,8 +141,8 @@ setup()
                     export CROSS_COMPILE_ARM32="$DIR/gcc32/bin/arm-eabi-"
                     ;;
                 9.3)
-                    git clone https://github.com/arter97/arm64-gcc --depth=1 gcc
-                    git clone https://github.com/arter97/arm32-gcc --depth=1 gcc32
+                    git clone https://github.com/laststandrighthere/arm64-gcc -b 9.3 --depth=1 gcc
+                    git clone https://github.com/laststandrighthere/arm32-gcc -b 9.3 --depth=1 gcc32
                     export CROSS_COMPILE="$DIR/gcc/bin/aarch64-elf-"
                     export CROSS_COMPILE_ARM32="$DIR/gcc32/bin/arm-eabi-"
                     ;;
@@ -164,11 +174,14 @@ setup()
 
     case "$TYPE" in
         aosp)
-            if [ "$FLASHER" == "vince" ]; then
-            	git clone https://github.com/laststandrighthere/flasher -b ak3 --depth=1 flasher
-            elif [ "$FLASHER" == "whyred" ]; then
-                git clone https://github.com/laststandrighthere/flasher -b whyred --depth=1 flasher
-            fi
+            case "$FLASHER" in
+                vince)
+                    git clone https://github.com/laststandrighthere/flasher -b ak3 --depth=1 flasher
+                ;;
+                whyred)
+                    git clone https://github.com/laststandrighthere/flasher -b whyred --depth=1 flasher
+                ;;
+            esac
             ;;
         miui)
             git clone https://github.com/laststandrighthere/flasher -b miui --depth=1 flasher
@@ -178,12 +191,7 @@ setup()
 
 main_msg()
 {
-    HASH=$(git rev-parse --short HEAD)
-    BRANCH=$(git rev-parse --abbrev-ref HEAD)
-    TEXT="[ $NAME ] kernel new build!
-    At branch ${BRANCH}
-    Under commit ${HASH}"
-
+    TEXT="New kernel build!%0AAt branch <code>$BRANCH</code>%0AUnder commit <code>$HASH</code>"
     tg msg "$TEXT"
 }
 
@@ -195,6 +203,9 @@ DEFCONFIG="${4}_defconfig"
 TYPE=$5
 CI=$6
 FLASHER=$7
+HASH=$(git rev-parse --short HEAD)
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+COMMIT=$(git log --pretty=format:'%h : %s' -1)
 
 export ARCH=arm64 && SUBARCH=arm64
 export KBUILD_BUILD_USER=sleepy
