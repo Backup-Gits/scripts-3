@@ -1,12 +1,15 @@
 #!/bin/bash
 
 # Script by Lau <laststandrighthere@gmail.com>
-
-# Usage: [Group Link] [Bot Token] [Action] [Extra]
-
-# Action:[  msg |  file  | sticker ]
-#           ↓        ↓        ↓
-# Extra: [ text |filename|  stkid  ] 
+#
+# Usage: [Group/Channel ID] [Bot Token] [Action] [Extra]
+#
+# Action  ->  Extra
+# ---------------------
+# msg     ->  text
+# file    ->  filename
+# sticker ->  stickerid
+#
 
 if [ "$4" == "" ]; then
     echo -e "Enter all the needed parameters"
@@ -22,13 +25,21 @@ URL="https://api.telegram.org/bot${BOT_TOKEN}/"
 
 case "$ACTION" in
     msg)
-        curl -X POST ${URL}sendMessage -d chat_id=$CHANNEL_ID -d text="$EXTRA"
+        curl  \
+        -X POST ${URL}sendMessage  \
+        -d chat_id=$CHANNEL_ID  \
+        -d text=$EXTRA
         ;;
     file)
-        curl -F chat_id=$CHANNEL_ID -F document=@$EXTRA ${URL}sendDocument
+        curl  \
+        -F chat_id=$CHANNEL_ID  \
+        -F document=@$EXTRA ${URL}sendDocument
         ;;
     sticker)
-        curl -s -X POST ${URL}sendSticker -d sticker="CAADAQADNgADWO60HuUx8T8ZaqhyAg" -d chat_id="$CHANNEL_ID"
+        curl  \
+        -X POST ${URL}sendSticker  \
+        -d chat_id=$CHANNEL_ID \
+        -d sticker=$EXTRA
         ;;
 esac
 
