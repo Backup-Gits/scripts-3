@@ -62,9 +62,9 @@ check()
 zip_upload()
 {
 	if [ $CI == "drone" ]; then
-		ZIP_NAME="${NAME}-${BRANCH^^}-r${DRONE_BUILD_NUMBER}.zip"
+		ZIP_NAME="${NAME}-${BRANCH}-r${DRONE_BUILD_NUMBER}.zip"
 	elif [ $CI == "semaphore" ]; then
-		ZIP_NAME="${NAME}-${BRANCH^^}-r${SEMAPHORE_BUILD_NUMBER}.zip"
+		ZIP_NAME="${NAME}-${BRANCH}-r${SEMAPHORE_BUILD_NUMBER}.zip"
 	fi
 
     cd $DIR/flasher
