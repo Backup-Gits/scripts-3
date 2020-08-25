@@ -61,11 +61,11 @@ check()
 
 zip_upload()
 {
-	if [ $CI == "drone" ]; then
-		ZIP_NAME="${NAME}-${BRANCH}-r${DRONE_BUILD_NUMBER}.zip"
-	elif [ $CI == "semaphore" ]; then
-		ZIP_NAME="${NAME}-${BRANCH}-r${SEMAPHORE_BUILD_NUMBER}.zip"
-	fi
+    if [ $CI == "drone" ]; then
+        ZIP_NAME="${NAME}-${BRANCH}-r${DRONE_BUILD_NUMBER}.zip"
+    elif [ $CI == "semaphore" ]; then
+        ZIP_NAME="${NAME}-${BRANCH}-r${SEMAPHORE_BUILD_NUMBER}.zip"
+    fi
 
     cd $DIR/flasher
     rm -rf .git
@@ -87,7 +87,7 @@ kernel()
             make O=out -j$JOBS 2>&1 | tee logs.log
             ;;
         clang)
-			make O=out $DEFCONFIG
+            make O=out $DEFCONFIG
             case "$TC_VER" in
                 aosp)
                     make -j$JOBS O=out \
@@ -113,6 +113,7 @@ kernel()
     check
     zip_upload
     tg msg "$TIME"
+    tg file $DIR/logs.log
     tg sticker $STICKER
 }
 
