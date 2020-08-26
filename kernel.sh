@@ -112,8 +112,9 @@ kernel()
 
     check
     zip_upload
-    tg msg "$TIME"
+    sleep 2
     tg file $DIR/logs.log
+    tg msg "$TIME"
     tg sticker $STICKER
 }
 
